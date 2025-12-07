@@ -5,6 +5,7 @@ import os
 import time
 import json
 import base64
+import mimetypes
 import requests
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -12,6 +13,7 @@ from openai import OpenAI
 import cv2
 from PIL import Image
 from dotenv import load_dotenv
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 # Load environment variables
 load_dotenv()
@@ -83,6 +85,8 @@ class VideoChainWorkflow:
             })
         
         try:
+            # NOTE: aihubmix uses a custom 'responses.create' API endpoint
+            # which differs from the standard OpenAI SDK
             response = self.client.responses.create(
                 model="gemini-3-pro-preview",
                 input=[
@@ -157,7 +161,6 @@ class VideoChainWorkflow:
         try:
             if reference_image_path and os.path.exists(reference_image_path):
                 # Determine MIME type from file extension
-                import mimetypes
                 mime_type, _ = mimetypes.guess_type(reference_image_path)
                 if not mime_type or not mime_type.startswith('image/'):
                     mime_type = "image/jpeg"  # Fallback
@@ -285,8 +288,6 @@ class VideoChainWorkflow:
         print(f"正在合并 {len(video_paths)} 个视频片段...")
         
         try:
-            from moviepy.editor import VideoFileClip, concatenate_videoclips
-            
             # Load all video clips
             clips = []
             for video_path in video_paths:
