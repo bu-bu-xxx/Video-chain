@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频链工作流 - Video Chain Workflow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+        
+        textarea, input[type="text"], input[type="number"], select, input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 12px;
+            background: #f5f5f5;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .file-input-label:hover {
+            background: #e8e8e8;
+            border-color: #667eea;
+        }
+        
+        input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .row .form-group {
+            flex: 1;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .status.info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            color: #1976d2;
+            display: block;
+        }
+        
+        .status.success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            color: #2e7d32;
+            display: block;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
+            display: block;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .video-result {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .video-result video {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .download-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 30px;
+            background: #4caf50;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .download-btn:hover {
+            background: #45a049;
+        }
+        
+        .hint {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 视频链工作流</h1>
+        <p class="subtitle">AI驱动的连贯视频生成系统</p>
+        
+        <form id="videoForm">
+            <div class="form-group">
+                <label for="description">视频描述 *</label>
+                <textarea id="description" name="description" placeholder="例如: 一只可爱的小猫在花园里玩耍，追逐蝴蝶，然后在树下休息..." required></textarea>
+                <p class="hint">详细描述您想要的视频内容</p>
+            </div>
+            
+            <div class="form-group">
+                <label>参考图片（可选）</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="image" name="image" accept="image/*">
+                    <label for="image" class="file-input-label" id="fileLabel">
+                        点击选择图片或拖拽到此处
+                    </label>
+                </div>
+                <p class="hint">支持 JPG, PNG, GIF 格式</p>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label for="segments">片段数量</label>
+                    <input type="number" id="segments" name="segments" value="3" min="1" max="10">
+                </div>
+                
+                <div class="form-group">
+                    <label for="duration">每段时长(秒)</label>
+                    <input type="number" id="duration" name="duration" value="4" min="2" max="10">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="size">视频尺寸</label>
+                <select id="size" name="size">
+                    <option value="1280x720">1280x720 (横屏 16:9)</option>
+                    <option value="720x1280">720x1280 (竖屏 9:16)</option>
+                    <option value="1920x1080">1920x1080 (全高清)</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">
+                生成视频
+            </button>
+        </form>
+        
+        <div id="status" class="status"></div>
+        
+        <div id="videoResult" class="video-result" style="display: none;"></div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('videoForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusDiv = document.getElementById('status');
+        const videoResult = document.getElementById('videoResult');
+        const fileInput = document.getElementById('image');
+        const fileLabel = document.getElementById('fileLabel');
+        
+        // Update file label when file is selected
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                fileLabel.textContent = `已选择: ${e.target.files[0].name}`;
+            } else {
+                fileLabel.textContent = '点击选择图片或拖拽到此处';
+            }
+        });
+        
+        // Handle drag and drop
+        fileLabel.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.background = '#e8e8e8';
+        });
+        
+        fileLabel.addEventListener('dragleave', function(e) {
+            this.style.background = '#f5f5f5';
+        });
+        
+        fileLabel.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.background = '#f5f5f5';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileLabel.textContent = `已选择: ${files[0].name}`;
+            }
+        });
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span>正在生成视频...';
+            
+            // Show loading status
+            statusDiv.className = 'status info';
+            statusDiv.textContent = '正在生成视频，这可能需要几分钟时间，请耐心等待...';
+            videoResult.style.display = 'none';
+            
+            try {
+                const formData = new FormData(form);
+                
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = '✓ 视频生成成功！';
+                    
+                    videoResult.innerHTML = `
+                        <video controls autoplay>
+                            <source src="${result.download_url}" type="video/mp4">
+                            您的浏览器不支持视频播放。
+                        </video>
+                        <br>
+                        <a href="${result.download_url}" class="download-btn" download>
+                            下载视频
+                        </a>
+                    `;
+                    videoResult.style.display = 'block';
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = `✗ 错误: ${result.error || '生成失败'}`;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `✗ 网络错误: ${error.message}`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '生成视频';
+            }
+        });
+        
+        // Check API status on load
+        fetch('/api/status')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.api_key_set) {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = '⚠ 警告: 未设置 AIHUBMIX_API_KEY 环境变量';
+                }
+            })
+            .catch(error => {
+                console.error('Status check failed:', error);
+            });
+    </script>
+</body>
+</html>
