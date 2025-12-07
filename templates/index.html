@@ -332,13 +332,16 @@
                     statusDiv.className = 'status success';
                     statusDiv.textContent = '✓ 视频生成成功！';
                     
+                    // Escape the URL to prevent XSS
+                    const safeUrl = encodeURI(result.download_url);
+                    
                     videoResult.innerHTML = `
                         <video controls autoplay>
-                            <source src="${result.download_url}" type="video/mp4">
+                            <source src="${safeUrl}" type="video/mp4">
                             您的浏览器不支持视频播放。
                         </video>
                         <br>
-                        <a href="${result.download_url}" class="download-btn" download>
+                        <a href="${safeUrl}" class="download-btn" download>
                             下载视频
                         </a>
                     `;

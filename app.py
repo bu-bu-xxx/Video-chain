@@ -115,7 +115,14 @@ def generate_video():
 def download_video(video_path):
     """Download generated video"""
     try:
-        full_path = os.path.join(app.config['OUTPUT_FOLDER'], video_path)
+        # Prevent path traversal attacks
+        full_path = os.path.abspath(os.path.join(app.config['OUTPUT_FOLDER'], video_path))
+        output_folder_abs = os.path.abspath(app.config['OUTPUT_FOLDER'])
+        
+        # Ensure the resolved path is within the output folder
+        if not full_path.startswith(output_folder_abs):
+            return jsonify({'error': '无效的文件路径'}), 400
+        
         if os.path.exists(full_path):
             return send_file(full_path, as_attachment=True)
         else:
@@ -141,4 +148,6 @@ if __name__ == '__main__':
     # Run the Flask app
     print("启动视频链Web界面...")
     print("访问 http://127.0.0.1:5000 打开界面")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Use debug=False for production, or set via environment variable
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

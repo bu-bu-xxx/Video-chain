@@ -156,17 +156,23 @@ class VideoChainWorkflow:
         
         try:
             if reference_image_path and os.path.exists(reference_image_path):
+                # Determine MIME type from file extension
+                import mimetypes
+                mime_type, _ = mimetypes.guess_type(reference_image_path)
+                if not mime_type or not mime_type.startswith('image/'):
+                    mime_type = "image/jpeg"  # Fallback
+                
                 # Generate with reference image
                 with open(reference_image_path, "rb") as img_file:
                     files = {
                         "prompt": (None, prompt),
-                        "model": (None, "sora-2-pro"),
+                        "model": (None, "sora-2"),  # Use consistent model name
                         "size": (None, size),
                         "seconds": (None, str(seconds)),
                         "input_reference": (
                             os.path.basename(reference_image_path),
                             img_file,
-                            "image/jpeg"
+                            mime_type
                         )
                     }
                     
@@ -202,6 +208,12 @@ class VideoChainWorkflow:
                 # Download the video
                 if video_url:
                     video_response = requests.get(video_url)
+                    
+                    # Check if download was successful
+                    if video_response.status_code != 200:
+                        print(f"下载视频失败，状态码: {video_response.status_code}")
+                        return None
+                    
                     if output_path is None:
                         output_path = f"segment_{int(time.time())}.mp4"
                     
