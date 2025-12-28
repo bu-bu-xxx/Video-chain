@@ -178,6 +178,21 @@ Video-chain/
 - Flask (Web界面)
 - OpenAI SDK (API调用)
 
+## 测试
+
+本项目包含完整的测试套件：
+
+```bash
+# 基本验证测试（无需依赖）
+python test_basic_validation.py
+
+# 单元测试（需要安装依赖）
+pip install -r requirements.txt
+python test_video_chain.py
+```
+
+详细测试文档请查看 [TESTING.md](TESTING.md)
+
 ## 注意事项
 
 1. **API费用**: 使用aihubmix API会产生费用，请注意控制使用量
